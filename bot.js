@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const fs = require('fs');
 
 class WhatsAppBot {
     constructor() {
@@ -20,7 +21,8 @@ class WhatsAppBot {
                     '--no-zygote',
                     '--disable-gpu',
                     '--disable-extensions'
-                ]
+                ],
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium'
             }
         });
 
@@ -28,42 +30,74 @@ class WhatsAppBot {
         this.qrCode = null;
         this.messageQueue = [];
         this.isProcessingQueue = false;
+        this.authenticationAttempts = 0;
+        this.maxAuthAttempts = 3;
         this.initialize();
     }
 
     initialize() {
+        console.log('🚀 Initializing WhatsApp Bot...');
+        console.log('📂 Session path: ./.wwebjs_auth');
+        console.log('🌐 Environment:', process.env.NODE_ENV || 'development');
+
         this.client.on('ready', () => {
             console.log('✅ WhatsApp Bot is ready and connected!');
             console.log('📱 Connected as:', this.client.info.pushname);
+            console.log('📞 Phone:', this.client.info.wid.user);
             this.isReady = true;
             this.qrCode = null;
+            this.authenticationAttempts = 0;
             this.processQueue();
         });
 
         this.client.on('qr', qr => {
             console.log('📱 QR Code generated! Scan with WhatsApp:');
+            console.log('⏰ QR Code generated at:', new Date().toISOString());
             qrcode.generate(qr, { small: true });
             this.qrCode = qr;
+            this.authenticationAttempts++;
+
+            if (this.authenticationAttempts > this.maxAuthAttempts) {
+                console.log('⚠️ Too many QR code attempts, restarting...');
+                this.restartClient();
+            }
         });
 
         this.client.on('authenticated', () => {
             console.log('🔐 Authentication successful!');
+            console.log('⏰ Authenticated at:', new Date().toISOString());
+            this.authenticationAttempts = 0;
         });
 
         this.client.on('auth_failure', (error) => {
             console.error('❌ Authentication failed:', error);
+            console.error('⏰ Failed at:', new Date().toISOString());
             this.isReady = false;
+
+            // Clear session and retry
+            console.log('🗑️ Clearing corrupted session...');
+            this.clearSession();
+
+            setTimeout(() => {
+                console.log('🔄 Restarting after auth failure...');
+                this.restartClient();
+            }, 5000);
         });
 
         this.client.on('disconnected', (reason) => {
             console.log('⚠️ Disconnected:', reason);
+            console.log('⏰ Disconnected at:', new Date().toISOString());
             this.isReady = false;
 
-            // Auto-reconnect after 5 seconds
+            // Auto-reconnect after 10 seconds
             setTimeout(() => {
                 console.log('🔄 Attempting to reconnect...');
                 this.client.initialize();
-            }, 5000);
+            }, 10000);
+        });
+
+        this.client.on('loading_screen', (percent, message) => {
+            console.log('⏳ Loading:', percent + '%', message);
         });
 
         this.client.on('message', async (message) => {
@@ -74,7 +108,38 @@ class WhatsAppBot {
             }
         });
 
-        this.client.initialize();
+        this.client.initialize().catch(err => {
+            console.error('❌ Initialization error:', err);
+            setTimeout(() => this.initialize(), 10000);
+        });
+    }
+
+    clearSession() {
+        try {
+            const sessionPath = './.wwebjs_auth';
+            if (fs.existsSync(sessionPath)) {
+                fs.rmSync(sessionPath, { recursive: true, force: true });
+                console.log('✅ Session cleared');
+            }
+        } catch (error) {
+            console.error('❌ Error clearing session:', error);
+        }
+    }
+
+    async restartClient() {
+        try {
+            console.log('🔄 Restarting WhatsApp client...');
+            await this.client.destroy();
+            this.isReady = false;
+            this.qrCode = null;
+            this.authenticationAttempts = 0;
+
+            setTimeout(() => {
+                this.initialize();
+            }, 5000);
+        } catch (error) {
+            console.error('❌ Error restarting client:', error);
+        }
     }
 
     // Format phone number to WhatsApp format
