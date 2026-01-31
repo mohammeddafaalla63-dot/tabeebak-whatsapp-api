@@ -35,8 +35,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm ci --only=production
+# Install Node.js dependencies (use npm install instead of ci to handle lock file issues)
+RUN npm install --omit=dev
 
 # Copy application files
 COPY . .
