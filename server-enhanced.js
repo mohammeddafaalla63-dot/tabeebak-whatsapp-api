@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const { supabase } = require('./supabase');
-const bot = require('./bot');
+const bot = require('./bot-noauth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
