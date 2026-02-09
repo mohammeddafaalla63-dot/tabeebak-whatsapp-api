@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const { supabase } = require('./supabase');
-const bot = require('./bot-noauth');
+const bot = require('./bot-noauth-final');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -65,18 +65,6 @@ setInterval(() => {
     }
 }, 3600000);
 
-// Keep-alive for Render free tier
-if (process.env.NODE_ENV === 'production') {
-    const keepAliveInterval = parseInt(process.env.KEEP_ALIVE_INTERVAL) || 600000;
-    setInterval(async () => {
-        try {
-            const response = await fetch(`${process.env.API_URL}/health`);
-            console.log('💓 Keep-alive pulse sent');
-        } catch (error) {
-            console.error('❌ Keep-alive failed:', error.message);
-        }
-    }, keepAliveInterval);
-}
 
 // ═══════════════════════════════════════
 // Home Page
