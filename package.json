@@ -1,6 +1,6 @@
 {
   "name": "tabeebak-whatsapp-api",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "WhatsApp Magic Link Authentication & Notifications for Tabeebak",
   "main": "server-enhanced.js",
   "scripts": {
@@ -26,6 +26,7 @@
     "express": "^4.18.2",
     "qrcode-terminal": "^0.12.0",
     "uuid": "^9.0.1",
-    "whatsapp-web.js": "^1.23.0"
+    "whatsapp-web.js": "^1.25.0",
+    "puppeteer": "^21.0.0"
   }
 }

@@ -1,0 +1,13 @@
+name: Keep Render Alive
+
+on:
+  schedule:
+    # كل 5 دقائق (Render يوقف بعد 15 دقيقة من عدم النشاط)
+    - cron: '*/5 * * * *'
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render App
+        run: curl -s https://tabeebak-app-api.onrender.com/health
