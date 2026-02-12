@@ -51,11 +51,21 @@ class WhatsAppBot {
         this.isProcessingQueue = false;
         this.connectionAttempts = 0;
         this.maxConnectionAttempts = 3;
+        this.initializationStarted = false;
 
-        this.initialize();
+        // Delay initialization to not block server startup
+        setTimeout(() => {
+            this.initialize();
+        }, 2000);
     }
 
     initialize() {
+        if (this.initializationStarted) {
+            console.log('⚠️ Initialization already in progress, skipping...');
+            return;
+        }
+
+        this.initializationStarted = true;
         console.log('📱 Setting up WhatsApp client event handlers...');
 
         // Ready event - THIS IS CRITICAL
@@ -79,6 +89,7 @@ class WhatsAppBot {
             const now = new Date();
             console.log('📱 QR Code generated at:', now.toISOString());
             console.log('⏰ Scan within 60 seconds!');
+            console.log('🌐 Visit /api/bot/qr to see the QR code');
             qrcode.generate(qr, { small: true });
             this.qrCode = qr;
             this.connectionAttempts++;
@@ -114,9 +125,8 @@ class WhatsAppBot {
             // Auto-reconnect after 10 seconds
             setTimeout(() => {
                 console.log('🔄 Attempting to reconnect...');
-                this.client.initialize().catch(err => {
-                    console.error('❌ Reconnect failed:', err);
-                });
+                this.initializationStarted = false;
+                this.initialize();
             }, 10000);
         });
 
@@ -138,11 +148,12 @@ class WhatsAppBot {
             }
         });
 
-        // Initialize client
-        console.log('🔄 Initializing WhatsApp client...');
+        // Initialize client (non-blocking)
+        console.log('🔄 Initializing WhatsApp client (non-blocking)...');
         this.client.initialize().catch(err => {
             console.error('❌ Initialization error:', err);
             console.error('Stack:', err.stack);
+            this.initializationStarted = false;
             setTimeout(() => {
                 console.log('🔄 Retrying initialization...');
                 this.initialize();

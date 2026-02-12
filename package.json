@@ -1,12 +1,12 @@
 {
   "name": "tabeebak-whatsapp-api",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "WhatsApp Magic Link Authentication & Notifications for Tabeebak",
-  "main": "server-enhanced.js",
+  "main": "server-render.js",
   "scripts": {
-    "start": "node server-enhanced.js",
-    "dev": "node server-enhanced.js",
-    "legacy": "node server.js"
+    "start": "node server-render.js",
+    "dev": "node server-render.js",
+    "legacy": "node server-enhanced.js"
   },
   "engines": {
     "node": ">=18.0.0"
